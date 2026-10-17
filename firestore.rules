@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if requester is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if requester is the owner of the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if requester is an authorized caregiver with verified patient consent
+    function isAuthorizedCaregiver(patientId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/patients/$(patientId)/caregiverConsents/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/patients/$(patientId)/caregiverConsents/$(request.auth.uid)).data.consentStatus == 'GRANTED';
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // Patient Profiles & Medication Data
+    match /patients/{patientId} {
+      // Patient can read/write their own data; authorized caregiver can read
+      allow read: if isOwner(patientId) || isAuthorizedCaregiver(patientId);
+      allow write: if isOwner(patientId);
+      
+      // Medicines subcollection
+      match /medicines/{medicineId} {
+        allow read: if isOwner(patientId) || isAuthorizedCaregiver(patientId);
+        allow write: if isOwner(patientId) || (isAuthorizedCaregiver(patientId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tabletsLeft']));
+      }
+
+      // Adherence Timeline Events
+      match /timeline/{eventId} {
+        allow read: if isOwner(patientId) || isAuthorizedCaregiver(patientId);
+        allow create: if isOwner(patientId);
+        allow update, delete: if isOwner(patientId);
+      }
+
+      // Caregiver Consent Records (Strict authorization requirement)
+      match /caregiverConsents/{caregiverId} {
+        allow read: if isOwner(patientId) || request.auth.uid == caregiverId;
+        allow write: if isOwner(patientId); // Only the patient can grant or revoke caregiver consent
+      }
+    }
+
+    // Emergency Alerts Collection
+    match /alerts/{alertId} {
+      // Patients can create alerts; assigned caregivers can read and acknowledge
+      allow read: if isAuthenticated() && (
+        resource.data.patientId == request.auth.uid || 
+        resource.data.caregiverId == request.auth.uid
+      );
+      allow create: if isAuthenticated() && request.resource.data.patientId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.caregiverId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acknowledged', 'acknowledgedAt'])
+      );
+      allow delete: if false; // Audit trail must be preserved
+    }
+  }
+}

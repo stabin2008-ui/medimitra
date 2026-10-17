@@ -1,0 +1,33 @@
+# Google Cloud Build Pipeline for MediMitra CareLoop
+# Automates building container and deploying to Google Cloud Run
+steps:
+  # 1. Build Container Image using Cloud Build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/medimitra-careloop:$COMMIT_SHA', '.']
+
+  # 2. Push Image to Google Container Registry / Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/medimitra-careloop:$COMMIT_SHA']
+
+  # 3. Deploy to Google Cloud Run (Fully Managed Serverless Container)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'medimitra-careloop-service'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/medimitra-careloop:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+
+images:
+  - 'gcr.io/$PROJECT_ID/medimitra-careloop:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
