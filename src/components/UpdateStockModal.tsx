@@ -13,7 +13,7 @@ export const UpdateStockModal: React.FC<UpdateStockModalProps> = ({
   onClose,
   initialMedicineId,
 }) => {
-  const { medicines, updateStock } = useApp();
+  const { medicines, updateStock, t } = useApp();
 
   const selectedMed =
     medicines.find((m) => m.id === initialMedicineId) ||
@@ -72,7 +72,7 @@ export const UpdateStockModal: React.FC<UpdateStockModalProps> = ({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#102A43' }}>Update Medicine Stock</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#102A43' }}>{t('updateStock')}</h2>
             <p style={{ fontSize: '12px', color: '#64748B' }}>Adjust tablet count after refill or purchase</p>
           </div>
           <button
@@ -225,14 +225,14 @@ export const UpdateStockModal: React.FC<UpdateStockModalProps> = ({
               className="btn-outline"
               style={{ flex: 1 }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
               className="btn-teal"
               style={{ flex: 1.5 }}
             >
-              <RefreshCw size={15} /> Confirm Update
+              <RefreshCw size={15} /> {t('updateStock')}
             </button>
           </div>
         </form>

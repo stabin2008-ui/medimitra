@@ -9,7 +9,8 @@ export const AlertsDrawer: React.FC = () => {
     alerts, 
     acknowledgeAlert,
     medicines,
-    setCurrentPage 
+    setCurrentPage,
+    t
   } = useApp();
 
   if (!isAlertsDrawerOpen) return null;
@@ -104,7 +105,7 @@ export const AlertsDrawer: React.FC = () => {
                     className="btn-teal"
                     style={{ padding: '5px 12px', fontSize: '11.5px', borderRadius: '6px' }}
                   >
-                    <Check size={13} /> Acknowledge Alert
+                    <Check size={13} /> {t('acknowledge')}
                   </button>
                 ) : (
                   <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 600 }}>

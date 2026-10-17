@@ -1,15 +1,22 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { X, User, Bell, Shield, RotateCcw, Check } from 'lucide-react';
+import { X, User, Shield, RotateCcw, Check, Heart, Globe } from 'lucide-react';
+import type { LanguageCode } from '../types';
 
 export const SettingsModal: React.FC = () => {
   const { 
     isSettingsOpen, 
     setIsSettingsOpen, 
+    currentUser,
     userRole, 
     switchToPatient, 
     switchToCaregiver, 
-    resetAllData 
+    resetAllData,
+    healthCheck,
+    updateHealthCheckSettings,
+    language,
+    setLanguage,
+    t
   } = useApp();
 
   if (!isSettingsOpen) return null;
@@ -40,10 +47,13 @@ export const SettingsModal: React.FC = () => {
           boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
         }}
       >
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#102A43' }}>Account & System Settings</h2>
-            <p style={{ fontSize: '12px', color: '#64748B' }}>Preferences, caregiver access, and routine data</p>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#102A43' }}>
+              {t('sidebarSettings', 'Account & System Settings')}
+            </h2>
+            <p style={{ fontSize: '12px', color: '#64748B' }}>Preferences, reminders, and language</p>
           </div>
           <button
             onClick={() => setIsSettingsOpen(false)}
@@ -53,17 +63,98 @@ export const SettingsModal: React.FC = () => {
               color: '#64748B',
               backgroundColor: '#F1F5F9',
             }}
+            aria-label="Close settings"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {/* Active Profile & Role Switcher */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Language Selector (Issue 1) */}
           <div style={{ padding: '14px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
             <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-              <User size={15} color="#0D9488" /> Active View & Role
+              <Globe size={15} color="#0D9488" /> Language / ಭಾಷೆ
             </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {[
+                { code: 'en' as LanguageCode, label: 'English' },
+                { code: 'kn' as LanguageCode, label: 'ಕನ್ನಡ (Kannada)' },
+              ].map((item) => {
+                const isSelected = language === item.code;
+                return (
+                  <button
+                    key={item.code}
+                    onClick={() => setLanguage(item.code)}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: isSelected ? '2px solid #0D9488' : '1px solid #CBD5E1',
+                      backgroundColor: isSelected ? '#F0FDFA' : '#FFFFFF',
+                      color: isSelected ? '#0D9488' : '#334155',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    {isSelected && <Check size={14} />}
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Daily Health Check-Up Configuration (Issue 4) */}
+          <div style={{ padding: '14px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+              <Heart size={15} color="#0D9488" /> {t('dailyHealthCheckupTitle', 'Daily Health Check-up')}
+            </span>
+            
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '13px', color: '#102A43', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={healthCheck.enabled}
+                onChange={(e) => updateHealthCheckSettings(e.target.checked, healthCheck.reminderTime)}
+                style={{ accentColor: '#0D9488', width: '16px', height: '16px' }}
+              />
+              <span style={{ fontWeight: 600 }}>Enable daily wellness check reminder</span>
+            </label>
+
+            {healthCheck.enabled && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px', color: '#475569' }}>
+                <span>Preferred reminder time:</span>
+                <select
+                  value={healthCheck.reminderTime}
+                  onChange={(e) => updateHealthCheckSettings(healthCheck.enabled, e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '12.5px',
+                    backgroundColor: '#FFFFFF',
+                    color: '#102A43',
+                  }}
+                >
+                  <option value="08:00 AM">08:00 AM</option>
+                  <option value="09:00 AM">09:00 AM (Default)</option>
+                  <option value="10:00 AM">10:00 AM</option>
+                  <option value="11:00 AM">11:00 AM</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Active Profile & Quick Switcher for Demo */}
+          <div style={{ padding: '14px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+              <User size={15} color="#0D9488" /> Active Account: {currentUser.name}
+            </span>
+            <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '10px' }}>
+              {currentUser.email} • Role: {userRole}
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 onClick={() => {
@@ -71,12 +162,12 @@ export const SettingsModal: React.FC = () => {
                   setIsSettingsOpen(false);
                 }}
                 style={{
-                  padding: '10px',
+                  padding: '9px',
                   borderRadius: '8px',
                   border: userRole === 'patient' ? '2px solid #0D9488' : '1px solid #CBD5E1',
                   backgroundColor: userRole === 'patient' ? '#F0FDFA' : '#FFFFFF',
                   color: userRole === 'patient' ? '#0D9488' : '#334155',
-                  fontSize: '12.5px',
+                  fontSize: '12px',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
@@ -85,7 +176,7 @@ export const SettingsModal: React.FC = () => {
                 }}
               >
                 {userRole === 'patient' && <Check size={14} />}
-                <span>Patient (Ramesh)</span>
+                <span>Demo Patient</span>
               </button>
               <button
                 onClick={() => {
@@ -93,12 +184,12 @@ export const SettingsModal: React.FC = () => {
                   setIsSettingsOpen(false);
                 }}
                 style={{
-                  padding: '10px',
+                  padding: '9px',
                   borderRadius: '8px',
                   border: userRole === 'caregiver' ? '2px solid #0D9488' : '1px solid #CBD5E1',
                   backgroundColor: userRole === 'caregiver' ? '#F0FDFA' : '#FFFFFF',
                   color: userRole === 'caregiver' ? '#0D9488' : '#334155',
-                  fontSize: '12.5px',
+                  fontSize: '12px',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
@@ -107,39 +198,22 @@ export const SettingsModal: React.FC = () => {
                 }}
               >
                 {userRole === 'caregiver' && <Check size={14} />}
-                <span>Caregiver (Anitha)</span>
+                <span>Demo Caregiver</span>
               </button>
-            </div>
-          </div>
-
-          {/* Notification Reminders */}
-          <div style={{ padding: '14px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-              <Bell size={15} color="#0D9488" /> Reminder Preferences
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', cursor: 'pointer' }}>
-                <input type="checkbox" defaultChecked style={{ accentColor: '#0D9488' }} />
-                <span>Audio chimes for morning & evening doses</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', cursor: 'pointer' }}>
-                <input type="checkbox" defaultChecked style={{ accentColor: '#0D9488' }} />
-                <span>Auto-alert caregiver if dose unconfirmed for 45 mins</span>
-              </label>
             </div>
           </div>
 
           {/* Privacy & Consent */}
           <div style={{ padding: '14px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
               <Shield size={15} color="#0D9488" /> Data Privacy & Consent
             </span>
             <p style={{ fontSize: '12px', color: '#64748B', lineHeight: 1.4 }}>
-              Caregiver Anitha has authorized viewing rights for medication reminders and stock levels. Real prescriptions are never modified automatically.
+              Caregiver links require explicit patient authorization. Patient routines and stock are isolated per authenticated user ID.
             </p>
           </div>
 
-          {/* Reset Demo Data */}
+          {/* Reset User Data */}
           <div>
             <button
               onClick={() => {

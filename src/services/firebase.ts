@@ -1,12 +1,23 @@
 /**
  * MediMitra CareLoop — Firebase Configuration & Service Integration
  * 
- * This module provides clean initialization for Firebase Authentication,
- * Cloud Firestore, and Firebase Cloud Messaging for Google Cloud Hackathon.
+ * Provides initialization for Firebase Authentication, Cloud Firestore,
+ * and Google OAuth provider.
  * 
- * If environment variables are not supplied, it safely reports unconfigured status
- * so the application runs seamlessly in offline local demonstration mode.
+ * If valid credentials are not provided in .env, gracefully runs in offline demo mode.
  */
+
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut as firebaseSignOut,
+  type Auth 
+} from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 export interface FirebaseConfig {
   apiKey?: string;
@@ -26,9 +37,6 @@ export const firebaseConfig: FirebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-/**
- * Checks whether valid Firebase credentials have been configured in .env
- */
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
   firebaseConfig.projectId &&
@@ -43,11 +51,33 @@ export const cloudStatus = {
   cloudRunEndpoint: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
 };
 
-// Safe logger explaining cloud status
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let db: Firestore | undefined;
+const googleProvider = new GoogleAuthProvider();
+
 if (isFirebaseConfigured) {
-  console.log('[MediMitra CareLoop] Connected to Google Cloud / Firebase project:', firebaseConfig.projectId);
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig as Record<string, string>) : getApps()[0];
+    auth = getAuth(app);
+    db = getFirestore(app);
+    console.log('[MediMitra CareLoop] Connected to Firebase project:', firebaseConfig.projectId);
+  } catch (err) {
+    console.warn('[MediMitra CareLoop] Firebase initialization failed:', err);
+  }
 } else {
   console.info(
     '[MediMitra CareLoop] Running in Offline Demonstration Mode. Real Firebase API keys are not detected in .env. To connect your Google Cloud project, follow instructions in README.md.'
   );
 }
+
+export { 
+  app, 
+  auth, 
+  db, 
+  googleProvider, 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  firebaseSignOut 
+};

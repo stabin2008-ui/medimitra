@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Toast } from './components/Toast';
 import { SettingsModal } from './components/SettingsModal';
 import { AlertsDrawer } from './components/AlertsDrawer';
+import { EmergencyCallModal } from './components/EmergencyCallModal';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
@@ -49,6 +50,7 @@ const AppRouter: React.FC = () => {
       <Toast />
       <SettingsModal />
       <AlertsDrawer />
+      <EmergencyCallModal />
     </div>
   );
 };

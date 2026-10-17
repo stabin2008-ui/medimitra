@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Menu, Bell, ChevronDown, Check, Globe, Settings as SettingsIcon, LogOut, ArrowLeftRight } from 'lucide-react';
+import { 
+  Menu, 
+  Bell, 
+  ChevronDown, 
+  Check, 
+  Globe, 
+  Settings as SettingsIcon, 
+  LogOut, 
+  ArrowLeftRight,
+  PhoneCall
+} from 'lucide-react';
+import type { LanguageCode } from '../types';
 
 interface TopHeaderBarProps {
   onToggleSidebar?: () => void;
@@ -14,17 +25,24 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
     userRole, 
     switchToPatient, 
     switchToCaregiver, 
+    logoutUser,
     setIsSettingsOpen, 
-    setIsAlertsDrawerOpen 
+    setIsAlertsDrawerOpen,
+    setIsEmergencyModalOpen,
+    language,
+    setLanguage,
+    t
   } = useApp();
 
   const [langOpen, setLangOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState('English');
   const [profileOpen, setProfileOpen] = useState(false);
 
   const unreadAlerts = alerts.filter((a) => !a.acknowledged).length;
 
-  const languages = ['English', 'हिंदी (Hindi)', 'தமிழ் (Tamil)', 'తెలుగు (Telugu)', 'ಕನ್ನಡ (Kannada)'];
+  const languages: { code: LanguageCode; label: string }[] = [
+    { code: 'en', label: 'English' },
+    { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
+  ];
 
   return (
     <header
@@ -61,7 +79,29 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
       </div>
 
       {/* Right Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+        {/* Emergency Call Quick Button (Issue 5) */}
+        <button
+          onClick={() => setIsEmergencyModalOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FECACA',
+            color: '#DC2626',
+            fontWeight: 700,
+            fontSize: '12.5px',
+            boxShadow: '0 1px 3px rgba(220, 38, 38, 0.1)',
+          }}
+          aria-label="Emergency Help 112 / 100"
+        >
+          <PhoneCall size={14} />
+          <span>{t('emergencyHelpButton', 'Emergency 112')}</span>
+        </button>
+
         {/* Notification Bell */}
         <button
           onClick={() => setIsAlertsDrawerOpen(true)}
@@ -95,7 +135,7 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
           )}
         </button>
 
-        {/* Language Selector */}
+        {/* Language Selector (Issue 1) */}
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setLangOpen(!langOpen)}
@@ -108,12 +148,13 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
               backgroundColor: '#F8FAFC',
               border: '1px solid #E2E8F0',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               color: '#334155',
             }}
+            aria-label="Select website language"
           >
             <Globe size={14} color="#0D9488" />
-            <span>{currentLang}</span>
+            <span>{language === 'kn' ? 'ಕನ್ನಡ' : 'English'}</span>
             <ChevronDown size={14} color="#64748B" />
           </button>
 
@@ -133,31 +174,34 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
                 zIndex: 100,
               }}
             >
-              {languages.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => {
-                    setCurrentLang(l.split(' ')[0]);
-                    setLangOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    textAlign: 'left',
-                    color: currentLang === l.split(' ')[0] ? '#0D9488' : '#334155',
-                    fontWeight: currentLang === l.split(' ')[0] ? 600 : 400,
-                    backgroundColor: currentLang === l.split(' ')[0] ? '#F0FDFA' : 'transparent',
-                  }}
-                >
-                  <span>{l}</span>
-                  {currentLang === l.split(' ')[0] && <Check size={14} color="#0D9488" />}
-                </button>
-              ))}
+              {languages.map((l) => {
+                const isSelected = language === l.code;
+                return (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLanguage(l.code);
+                      setLangOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      color: isSelected ? '#0D9488' : '#334155',
+                      fontWeight: isSelected ? 700 : 500,
+                      backgroundColor: isSelected ? '#F0FDFA' : 'transparent',
+                    }}
+                  >
+                    <span>{l.label}</span>
+                    {isSelected && <Check size={14} color="#0D9488" />}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -212,10 +256,10 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
               <div style={{ paddingBottom: '8px', borderBottom: '1px solid #E2E8F0', marginBottom: '8px' }}>
                 <p style={{ fontWeight: 700, fontSize: '14px', color: '#102A43' }}>{currentUser.name}</p>
                 <p style={{ fontSize: '12px', color: '#64748B' }}>
-                  {userRole === 'patient' ? 'Patient (Age 64 • Male)' : 'Primary Caregiver (Anitha)'}
+                  {currentUser.email}
                 </p>
                 <p style={{ fontSize: '11px', color: '#0D9488', marginTop: '2px', fontWeight: 600 }}>
-                  CareLoop Sync: Connected
+                  Role: {currentUser.role === 'patient' ? t('patientRole', 'Patient') : t('caregiverRole', 'Caregiver')}
                 </p>
               </div>
 
@@ -233,7 +277,7 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
                   color: '#334155',
                 }}
               >
-                View Patient Timeline
+                {t('patientTimelineTitle', 'View Patient Timeline')}
               </button>
 
               <button
@@ -280,13 +324,13 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
                 }}
               >
                 <SettingsIcon size={14} />
-                <span>Account Settings</span>
+                <span>{t('sidebarSettings', 'Account Settings')}</span>
               </button>
 
               <button
                 onClick={() => {
-                  setCurrentPage('login');
                   setProfileOpen(false);
+                  logoutUser();
                 }}
                 style={{
                   width: '100%',
@@ -302,7 +346,7 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({ onToggleSidebar }) =
                 }}
               >
                 <LogOut size={14} />
-                <span>Sign Out</span>
+                <span>{t('logout', 'Sign Out')}</span>
               </button>
             </div>
           )}

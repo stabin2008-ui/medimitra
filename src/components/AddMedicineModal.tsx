@@ -8,7 +8,7 @@ interface AddMedicineModalProps {
 }
 
 export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onClose }) => {
-  const { addMedicine } = useApp();
+  const { addMedicine, t } = useApp();
 
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
@@ -78,7 +78,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onCl
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#102A43' }}>Add New Medicine</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#102A43' }}>{t('addNewMedicine')}</h2>
             <p style={{ fontSize: '12px', color: '#64748B' }}>Enter prescribed routine from your physician</p>
           </div>
           <button
@@ -291,14 +291,14 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onCl
               className="btn-outline"
               style={{ flex: 1 }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
               className="btn-teal"
               style={{ flex: 1.5 }}
             >
-              <Plus size={16} /> Save Medicine
+              <Plus size={16} /> {t('save')}
             </button>
           </div>
         </form>

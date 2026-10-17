@@ -10,7 +10,9 @@ import {
   HelpCircle, 
   AlertTriangle, 
   ChevronRight, 
-  ArrowLeftRight
+  ArrowLeftRight,
+  PhoneCall,
+  Globe
 } from 'lucide-react';
 
 export const CaregiverDashboardPage: React.FC = () => {
@@ -19,7 +21,11 @@ export const CaregiverDashboardPage: React.FC = () => {
     alerts, 
     setCurrentPage, 
     switchToPatient,
-    setIsAlertsDrawerOpen 
+    setIsAlertsDrawerOpen,
+    setIsEmergencyModalOpen,
+    language,
+    setLanguage,
+    t
   } = useApp();
 
   const unconfirmedReminders = medicines.filter((m) => m.status === 'Pending').length;
@@ -41,7 +47,7 @@ export const CaregiverDashboardPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
+          padding: '14px 20px',
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid #E2E8F0',
         }}
@@ -65,6 +71,48 @@ export const CaregiverDashboardPage: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Emergency SOS */}
+          <button
+            onClick={() => setIsEmergencyModalOpen(true)}
+            style={{
+              padding: '6px 10px',
+              borderRadius: '16px',
+              backgroundColor: '#FEE2E2',
+              color: '#DC2626',
+              border: '1px solid #FECACA',
+              fontWeight: 700,
+              fontSize: '11.5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            aria-label="Emergency 112"
+          >
+            <PhoneCall size={12} />
+            <span>112</span>
+          </button>
+
+          {/* Language Toggle */}
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'kn' : 'en')}
+            style={{
+              padding: '6px 10px',
+              borderRadius: '16px',
+              backgroundColor: '#F8FAFC',
+              color: '#102A43',
+              border: '1px solid #E2E8F0',
+              fontWeight: 600,
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            aria-label="Toggle language"
+          >
+            <Globe size={12} color="#0D9488" />
+            <span>{language === 'en' ? 'ಕನ್ನಡ' : 'EN'}</span>
+          </button>
+
           <button
             onClick={() => setIsAlertsDrawerOpen(true)}
             style={{
@@ -77,13 +125,13 @@ export const CaregiverDashboardPage: React.FC = () => {
             }}
             aria-label="View caregiver alerts"
           >
-            <Bell size={22} />
+            <Bell size={20} />
             {activeHelpRequests.length > 0 && (
               <span
                 style={{
                   position: 'absolute',
-                  top: '4px',
-                  right: '4px',
+                  top: '2px',
+                  right: '2px',
                   width: '9px',
                   height: '9px',
                   backgroundColor: '#DC2626',
@@ -139,7 +187,7 @@ export const CaregiverDashboardPage: React.FC = () => {
             </div>
             <div>
               <span style={{ fontSize: '12px', color: '#64748B', display: 'block', fontWeight: 500 }}>
-                Linked Patients
+                {t('linkedPatientsTitle', 'Linked Patients')}
               </span>
               <div style={{ fontSize: '24px', fontWeight: 800, color: '#102A43', marginTop: '2px' }}>
                 2
@@ -158,7 +206,7 @@ export const CaregiverDashboardPage: React.FC = () => {
             </div>
             <div>
               <span style={{ fontSize: '12px', color: '#64748B', display: 'block', fontWeight: 500 }}>
-                Unconfirmed
+                {t('unconfirmedRemindersTitle', 'Unconfirmed')}
               </span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '2px' }}>
                 <span style={{ fontSize: '24px', fontWeight: 800, color: '#102A43' }}>
@@ -188,7 +236,7 @@ export const CaregiverDashboardPage: React.FC = () => {
             </div>
             <div>
               <span style={{ fontSize: '12px', color: '#64748B', display: 'block', fontWeight: 500 }}>
-                Help Requests
+                {t('helpRequestsTitle', 'Help Requests')}
               </span>
               <div style={{ fontSize: '24px', fontWeight: 800, color: activeHelpRequests.length > 0 ? '#DC2626' : '#102A43', marginTop: '2px' }}>
                 {activeHelpRequests.length}
@@ -207,7 +255,7 @@ export const CaregiverDashboardPage: React.FC = () => {
             </div>
             <div>
               <span style={{ fontSize: '12px', color: '#64748B', display: 'block', fontWeight: 500 }}>
-                Low Stock
+                {t('lowStockAlertsTitle', 'Low Stock')}
               </span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '2px' }}>
                 <span style={{ fontSize: '24px', fontWeight: 800, color: '#102A43' }}>
@@ -222,7 +270,7 @@ export const CaregiverDashboardPage: React.FC = () => {
         {/* Your Patients Section */}
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#102A43', marginBottom: '14px' }}>
-            Your Patients
+            {t('linkedPatientsTitle', 'Your Patients')}
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -240,29 +288,39 @@ export const CaregiverDashboardPage: React.FC = () => {
               }}
               onClick={() => setCurrentPage('timeline')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <img
                   src="/assets/avatar_ramesh.jpg"
-                  alt="Ramesh profile"
-                  style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '1.5px solid #0D9488',
-                  }}
+                  alt="Ramesh Kumar Avatar"
+                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
                 />
                 <div>
-                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#102A43' }}>
-                    Ramesh (You)
-                  </h3>
-                  <p style={{ fontSize: '12.5px', color: '#EA580C', fontWeight: 500 }}>
-                    {unconfirmedReminders} unconfirmed • {lowStockCount} low stock
-                  </p>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#102A43' }}>
+                    Ramesh Kumar (Father)
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: '#64748B', marginTop: '2px' }}>
+                    {unconfirmedReminders > 0 ? `${unconfirmedReminders} unconfirmed` : 'All taken'} • {lowStockCount > 0 ? `${lowStockCount} low stock` : 'Good stock'}
+                  </div>
                 </div>
               </div>
 
-              <ChevronRight size={18} color="#94A3B8" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {activeHelpRequests.length > 0 && (
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backgroundColor: '#FEE2E2',
+                      color: '#DC2626',
+                      padding: '3px 8px',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    Help Needed
+                  </span>
+                )}
+                <ChevronRight size={18} color="#94A3B8" />
+              </div>
             </div>
 
             {/* Patient Card 2: Lakshmi */}
@@ -278,25 +336,19 @@ export const CaregiverDashboardPage: React.FC = () => {
               }}
               onClick={() => setCurrentPage('timeline')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <img
                   src="/assets/avatar_lakshmi.jpg"
-                  alt="Lakshmi profile"
-                  style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '1.5px solid #E2E8F0',
-                  }}
+                  alt="Lakshmi Devi Avatar"
+                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
                 />
                 <div>
-                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#102A43' }}>
-                    Lakshmi
-                  </h3>
-                  <p style={{ fontSize: '12.5px', color: '#16A34A', fontWeight: 600 }}>
-                    All good
-                  </p>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#102A43' }}>
+                    Lakshmi Devi (Mother)
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: '#16A34A', fontWeight: 600, marginTop: '2px' }}>
+                    {t('allGood', 'All good')} • Morning doses complete
+                  </div>
                 </div>
               </div>
 
@@ -309,17 +361,10 @@ export const CaregiverDashboardPage: React.FC = () => {
         <button
           onClick={() => setCurrentPage('timeline')}
           className="btn-outline"
-          style={{ width: '100%', justifyContent: 'center', padding: '12px', borderRadius: '12px' }}
+          style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '14px', fontWeight: 600 }}
         >
-          View All Patients
+          {t('viewAll', 'View Detailed Patient History')}
         </button>
-
-        {/* Safety Note */}
-        <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#F0FDFA', borderRadius: '10px', border: '1px solid #CCFBF1' }}>
-          <p style={{ fontSize: '11.5px', color: '#0F766E', lineHeight: 1.4 }}>
-            <strong>Consent-Protected:</strong> Caregivers only receive status updates authorized by patients. Unconfirmed reminders indicate pending confirmation, not guaranteed omission.
-          </p>
-        </div>
       </main>
 
       {/* Mobile Bottom Navigation for Caregiver */}

@@ -10,7 +10,7 @@ interface EditMedicineModalProps {
 }
 
 export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, onClose, medicine }) => {
-  const { editMedicine } = useApp();
+  const { editMedicine, t } = useApp();
 
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
@@ -90,7 +90,7 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#102A43' }}>Edit Medicine Routine</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#102A43' }}>{t('editMedicine')}</h2>
             <p style={{ fontSize: '12px', color: '#64748B' }}>Update dosage instructions prescribed by doctor</p>
           </div>
           <button
@@ -292,14 +292,14 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
               className="btn-outline"
               style={{ flex: 1 }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
               className="btn-teal"
               style={{ flex: 1.5 }}
             >
-              <Save size={16} /> Save Changes
+              <Save size={16} /> {t('saveChanges')}
             </button>
           </div>
         </form>

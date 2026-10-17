@@ -11,6 +11,8 @@ export type PageId =
 
 export type UserRole = 'patient' | 'caregiver' | 'guest';
 
+export type LanguageCode = 'en' | 'kn';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -19,6 +21,12 @@ export interface UserProfile {
   avatar: string;
   ageGender?: string;
   relation?: string;
+  isDemoUser?: boolean;
+}
+
+export interface RegisteredAccount extends UserProfile {
+  passwordHash?: string;
+  createdAt: string;
 }
 
 export interface Medicine {
@@ -70,4 +78,13 @@ export interface LinkedPatient {
   unconfirmedCount: number;
   lowStockCount: number;
   isAllGood: boolean;
+}
+
+export interface HealthCheckState {
+  enabled: boolean;
+  reminderTime: string; // e.g. "09:00 AM"
+  lastCheckInDate: string | null; // e.g. "2026-10-17"
+  status: 'pending' | 'completed' | 'snoozed';
+  feeling?: 'great' | 'okay' | 'need_help';
+  completedAt?: string;
 }

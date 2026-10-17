@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Logo } from '../components/Logo';
-import { User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Globe, PhoneCall } from 'lucide-react';
 
 export const SignUpPage: React.FC = () => {
-  const { setCurrentPage, setUserRole, showToast } = useApp();
+  const { 
+    setCurrentPage, 
+    showToast, 
+    registerUser, 
+    loginWithGoogle,
+    language,
+    setLanguage,
+    setIsEmergencyModalOpen,
+    t
+  } = useApp();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,43 +26,44 @@ export const SignUpPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!fullName.trim()) {
-      setError('Please enter your full name.');
+      setError(t('enterFullNameError', 'Please enter your full name.'));
       return;
     }
 
     if (!email.trim() || !email.includes('@') || !email.includes('.')) {
-      setError('Please enter a valid email address.');
+      setError(t('invalidEmailError', 'Please enter a valid email address.'));
       return;
     }
 
     if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t('passwordLengthError', 'Password must be at least 6 characters.'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter.');
+      setError(t('passwordMismatchError', 'Passwords do not match. Please re-enter.'));
       return;
     }
 
     if (!agreeTerms) {
-      setError('You must accept the Terms of Use and Privacy Policy to continue.');
+      setError(t('termsRequiredError', 'You must accept the Terms of Use and Privacy Policy to continue.'));
       return;
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setUserRole(accountType);
+    const res = await registerUser(fullName, email, password, accountType);
+    setIsLoading(false);
+
+    if (res.success) {
       showToast(
         accountType === 'patient'
-          ? `Welcome to MediMitra CareLoop, ${fullName}! Your patient routine is ready.`
-          : `Welcome, ${fullName}! Your caregiver portal is ready to link loved ones.`,
+          ? `Welcome to MediMitra CareLoop, ${fullName}! Your private patient routine is ready.`
+          : `Welcome, ${fullName}! Your caregiver portal is ready to link loved ones with patient consent.`,
         'success'
       );
       if (accountType === 'patient') {
@@ -61,13 +71,24 @@ export const SignUpPage: React.FC = () => {
       } else {
         setCurrentPage('caregiver');
       }
-    }, 700);
+    } else {
+      setError(res.error || 'Failed to create account. Please try again.');
+    }
   };
 
-  const handleGoogleSignUp = () => {
-    showToast('Demo Mode: Google account linked as Patient.', 'info');
-    setUserRole('patient');
-    setCurrentPage('dashboard');
+  const handleGoogleSignUp = async () => {
+    setIsLoading(true);
+    setError('');
+    const res = await loginWithGoogle();
+    setIsLoading(false);
+
+    if (res.success) {
+      showToast('Account registered via Google successfully!', 'success');
+      setCurrentPage('dashboard');
+    } else {
+      setError(res.error || 'Google registration could not be completed.');
+      showToast(res.error || 'Google registration failed.', 'warning');
+    }
   };
 
   return (
@@ -76,12 +97,66 @@ export const SignUpPage: React.FC = () => {
         minHeight: '100vh',
         backgroundColor: '#F0FDFA',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '28px 16px',
         boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
+      {/* Top Bar with Language Toggle & Emergency Call */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}
+      >
+        <button
+          onClick={() => setIsEmergencyModalOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            backgroundColor: '#FEE2E2',
+            border: '1px solid #FECACA',
+            color: '#DC2626',
+            fontWeight: 700,
+            fontSize: '12.5px',
+          }}
+          aria-label="Emergency 112 / 100"
+        >
+          <PhoneCall size={14} />
+          <span>{t('emergencyHelpButton', 'Emergency 112')}</span>
+        </button>
+
+        <button
+          onClick={() => setLanguage(language === 'en' ? 'kn' : 'en')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #CBD5E1',
+            color: '#102A43',
+            fontWeight: 600,
+            fontSize: '12.5px',
+          }}
+          aria-label="Toggle language"
+        >
+          <Globe size={14} color="#0D9488" />
+          <span>{language === 'en' ? 'ಕನ್ನಡ' : 'English'}</span>
+        </button>
+      </div>
+
       <div
         className="card-white"
         style={{
@@ -111,299 +186,392 @@ export const SignUpPage: React.FC = () => {
             letterSpacing: '-0.3px',
           }}
         >
-          Create Your Account
+          {t('createAccountTitle', 'Create Your Account')}
         </h1>
-        <p style={{ fontSize: '13.5px', color: '#64748B', marginBottom: '24px' }}>
-          Join MediMitra CareLoop to protect health routines
+        <p style={{ fontSize: '13.5px', color: '#64748B', marginBottom: '22px' }}>
+          {t('signUpSubtitle', 'Join MediMitra CareLoop to protect routines and connect with loved ones')}
         </p>
 
+        {/* Error Alert */}
         {error && (
           <div
             style={{
-              padding: '10px 14px',
-              backgroundColor: '#FEF2F2',
-              color: '#DC2626',
-              borderRadius: '8px',
-              fontSize: '13px',
-              marginBottom: '18px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
+              padding: '10px 14px',
+              backgroundColor: '#FEF2F2',
+              borderRadius: '8px',
+              border: '1px solid #FEE2E2',
+              color: '#DC2626',
+              fontSize: '13px',
+              marginBottom: '16px',
               textAlign: 'left',
             }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Form */}
+        {/* Registration Form */}
         <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
-          {/* Account Type Selector */}
+          {/* Account Type Selector (Patient vs Caregiver) */}
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '6px' }}>
-              Account Type *
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#102A43',
+                marginBottom: '8px',
+              }}
+            >
+              {t('accountTypeLabel', 'Account Type')}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <button
                 type="button"
                 onClick={() => setAccountType('patient')}
                 style={{
-                  padding: '10px 12px',
+                  padding: '12px 14px',
                   borderRadius: '10px',
                   border: accountType === 'patient' ? '2px solid #0D9488' : '1px solid #CBD5E1',
                   backgroundColor: accountType === 'patient' ? '#F0FDFA' : '#FFFFFF',
                   color: accountType === 'patient' ? '#0D9488' : '#475569',
-                  fontWeight: 600,
-                  fontSize: '13px',
+                  fontWeight: accountType === 'patient' ? 700 : 500,
+                  fontSize: '13.5px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
+                <span>{t('patientRole', 'Patient / Senior')}</span>
                 {accountType === 'patient' && <CheckCircle2 size={16} color="#0D9488" />}
-                <span>Patient / Senior</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setAccountType('caregiver')}
                 style={{
-                  padding: '10px 12px',
+                  padding: '12px 14px',
                   borderRadius: '10px',
                   border: accountType === 'caregiver' ? '2px solid #0D9488' : '1px solid #CBD5E1',
                   backgroundColor: accountType === 'caregiver' ? '#F0FDFA' : '#FFFFFF',
                   color: accountType === 'caregiver' ? '#0D9488' : '#475569',
-                  fontWeight: 600,
-                  fontSize: '13px',
+                  fontWeight: accountType === 'caregiver' ? 700 : 500,
+                  fontSize: '13.5px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
+                <span>{t('caregiverRole', 'Caregiver / Family')}</span>
                 {accountType === 'caregiver' && <CheckCircle2 size={16} color="#0D9488" />}
-                <span>Caregiver / Family</span>
               </button>
             </div>
           </div>
 
-          {/* Full Name */}
+          {/* Full Name Field */}
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '5px' }}>
-              Full Name *
-            </label>
-            <div
+            <label
+              htmlFor="signup-name"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid #CBD5E1',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                backgroundColor: '#FFFFFF',
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#102A43',
+                marginBottom: '6px',
               }}
             >
-              <User size={18} color="#94A3B8" style={{ marginRight: '10px', flexShrink: 0 }} />
+              {t('fullNameLabel', 'Full Name')}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
+                id="signup-name"
                 type="text"
-                placeholder="e.g. Ramesh Kumar"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', color: '#102A43' }}
+                placeholder="e.g. Ramesh Kumar"
                 required
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 38px',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#FFFFFF',
+                  color: '#102A43',
+                }}
+              />
+              <User
+                size={18}
+                color="#94A3B8"
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
               />
             </div>
           </div>
 
-          {/* Email Address */}
+          {/* Email Field */}
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '5px' }}>
-              Email Address *
-            </label>
-            <div
+            <label
+              htmlFor="signup-email"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid #CBD5E1',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                backgroundColor: '#FFFFFF',
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#102A43',
+                marginBottom: '6px',
               }}
             >
-              <Mail size={18} color="#94A3B8" style={{ marginRight: '10px', flexShrink: 0 }} />
+              {t('emailLabel', 'Email Address')}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
+                id="signup-email"
                 type="email"
-                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', color: '#102A43' }}
+                placeholder="name@example.com"
                 required
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 38px',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#FFFFFF',
+                  color: '#102A43',
+                }}
+              />
+              <Mail
+                size={18}
+                color="#94A3B8"
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
               />
             </div>
           </div>
 
-          {/* Create Password */}
+          {/* Password Field */}
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '5px' }}>
-              Create Password *
-            </label>
-            <div
+            <label
+              htmlFor="signup-password"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid #CBD5E1',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                backgroundColor: '#FFFFFF',
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#102A43',
+                marginBottom: '6px',
               }}
             >
-              <Lock size={18} color="#94A3B8" style={{ marginRight: '10px', flexShrink: 0 }} />
+              {t('passwordLabel', 'Password (min. 6 characters)')}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
+                id="signup-password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Minimum 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', color: '#102A43' }}
+                placeholder="••••••••"
                 required
+                style={{
+                  width: '100%',
+                  padding: '10px 40px 10px 38px',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#FFFFFF',
+                  color: '#102A43',
+                }}
+              />
+              <Lock
+                size={18}
+                color="#94A3B8"
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94A3B8',
+                  padding: '4px',
+                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password */}
+          {/* Confirm Password Field */}
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '5px' }}>
-              Confirm Password *
-            </label>
-            <div
+            <label
+              htmlFor="signup-confirm-password"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid #CBD5E1',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                backgroundColor: '#FFFFFF',
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#102A43',
+                marginBottom: '6px',
               }}
             >
-              <Lock size={18} color="#94A3B8" style={{ marginRight: '10px', flexShrink: 0 }} />
+              {t('confirmPasswordLabel', 'Confirm Password')}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
+                id="signup-confirm-password"
                 type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', color: '#102A43' }}
+                placeholder="••••••••"
                 required
+                style={{
+                  width: '100%',
+                  padding: '10px 40px 10px 38px',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#FFFFFF',
+                  color: '#102A43',
+                }}
+              />
+              <Lock
+                size={18}
+                color="#94A3B8"
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94A3B8',
+                  padding: '4px',
+                }}
+                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
-          {/* Terms Checkbox */}
+          {/* Terms & Privacy Consent */}
           <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', color: '#475569', cursor: 'pointer', lineHeight: 1.4 }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12.5px', color: '#475569', lineHeight: 1.4 }}>
               <input
                 type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
                 style={{ accentColor: '#0D9488', width: '16px', height: '16px', marginTop: '2px', flexShrink: 0 }}
-                required
               />
               <span>
-                I agree to the <a href="#terms" style={{ color: '#0D9488', fontWeight: 600 }}>Terms of Use</a> and acknowledge the{' '}
-                <a href="#privacy" style={{ color: '#0D9488', fontWeight: 600 }}>Privacy Policy</a>. Data is encrypted and private.
+                {t('agreeTermsText', 'I agree to the Terms of Use and Privacy Policy. I acknowledge that MediMitra CareLoop never provides medical prescriptions or automates pharmacy orders.')}
               </span>
             </label>
           </div>
 
-          {/* Create Account Button */}
+          {/* Primary Create Account Button */}
           <button
             type="submit"
-            className="btn-teal"
             disabled={isLoading}
+            className="btn-teal"
             style={{
               width: '100%',
-              padding: '12px',
+              padding: '13px',
               borderRadius: '10px',
               fontSize: '15px',
               fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(13, 148, 136, 0.25)',
+              opacity: isLoading ? 0.7 : 1,
             }}
           >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading ? 'Creating Account...' : t('createAccountTitle', 'Create Account')}
           </button>
         </form>
 
-        {/* Divider with 'or' */}
+        {/* Divider */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            margin: '20px 0',
+            margin: '22px 0',
             color: '#94A3B8',
-            fontSize: '13px',
+            fontSize: '12.5px',
           }}
         >
           <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
-          <span style={{ padding: '0 12px' }}>or</span>
+          <span style={{ padding: '0 12px' }}>{t('or', 'or')}</span>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
         </div>
 
-        {/* Sign up with Google */}
+        {/* Sign Up with Google */}
         <button
           type="button"
           onClick={handleGoogleSignUp}
-          className="btn-outline"
+          disabled={isLoading}
           style={{
-            width: '100%',
-            padding: '11px',
-            borderRadius: '10px',
-            fontSize: '14px',
-            fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '10px',
-            borderColor: '#CBD5E1',
+            width: '100%',
+            padding: '11px',
+            borderRadius: '10px',
+            border: '1.5px solid #E2E8F0',
+            backgroundColor: '#FFFFFF',
+            color: '#102A43',
+            fontSize: '14px',
+            fontWeight: 600,
+            transition: 'all 0.2s ease',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
           </svg>
-          <span>Sign up with Google</span>
+          <span>{t('signInWithGoogle', 'Sign in with Google')}</span>
         </button>
 
-        {/* Link back to Login */}
-        <p style={{ marginTop: '22px', fontSize: '13.5px', color: '#64748B' }}>
-          Already have an account?{' '}
+        {/* Back to Sign In Link */}
+        <p style={{ marginTop: '24px', fontSize: '13.5px', color: '#64748B' }}>
+          {t('alreadyHaveAccount', 'Already have an account?')}{' '}
           <button
+            type="button"
             onClick={() => setCurrentPage('login')}
-            style={{
-              color: '#0D9488',
-              fontWeight: 700,
-              border: 'none',
-              background: 'none',
-              padding: 0,
-              cursor: 'pointer',
-            }}
+            style={{ color: '#0D9488', fontWeight: 700 }}
           >
-            Sign In
+            {t('signIn', 'Sign In')}
           </button>
         </p>
       </div>

@@ -5,8 +5,11 @@ import { MobileBottomNav } from '../components/MobileBottomNav';
 import { 
   ArrowLeft, 
   MoreHorizontal, 
-  X
+  X,
+  PhoneCall,
+  Globe
 } from 'lucide-react';
+import type { LanguageCode } from '../types';
 
 export const PatientTimelinePage: React.FC = () => {
   const { 
@@ -14,6 +17,10 @@ export const PatientTimelinePage: React.FC = () => {
     medicines, 
     alerts, 
     setCurrentPage, 
+    t,
+    language,
+    setLanguage,
+    openEmergencyModal,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'Timeline' | 'Medicines' | 'Stock' | 'Alerts'>('Timeline');
@@ -39,42 +46,94 @@ export const PatientTimelinePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
+          padding: '14px 20px',
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid #E2E8F0',
+          gap: '10px',
+          flexWrap: 'wrap',
         }}
       >
-        <button
-          onClick={() => setCurrentPage('caregiver')}
-          style={{
-            padding: '6px',
-            color: '#102A43',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          aria-label="Back to caregiver overview"
-        >
-          <ArrowLeft size={22} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setCurrentPage('caregiver')}
+            style={{
+              padding: '6px',
+              color: '#102A43',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Back to caregiver overview"
+          >
+            <ArrowLeft size={22} />
+          </button>
 
-        <div onClick={() => setCurrentPage('dashboard')} style={{ cursor: 'pointer' }}>
-          <Logo variant="navy" size="sm" />
+          <div onClick={() => setCurrentPage('dashboard')} style={{ cursor: 'pointer' }}>
+            <Logo variant="navy" size="sm" />
+          </div>
         </div>
 
-        <button
-          onClick={() => setShowProfileModal(true)}
-          style={{
-            padding: '6px',
-            color: '#64748B',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          aria-label="Patient options"
-        >
-          <MoreHorizontal size={22} />
-        </button>
+        {/* Header Actions: Emergency + Language Selector + Profile Menu */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={openEmergencyModal}
+            className="btn-danger-emergency"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: '#DC2626',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(220,38,38,0.25)',
+            }}
+            aria-label="Emergency SOS 112"
+          >
+            <PhoneCall size={14} />
+            <span>112</span>
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#F1F5F9', padding: '4px 8px', borderRadius: '20px' }}>
+            <Globe size={13} color="#0D9488" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#102A43',
+                cursor: 'pointer',
+                outline: 'none',
+                padding: '2px',
+              }}
+              aria-label="Select Language"
+            >
+              <option value="en">EN</option>
+              <option value="kn">ಕನ್ನಡ</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => setShowProfileModal(true)}
+            style={{
+              padding: '6px',
+              color: '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Patient options"
+          >
+            <MoreHorizontal size={22} />
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -125,7 +184,7 @@ export const PatientTimelinePage: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            View Profile
+            {t('viewProfile')}
           </button>
         </div>
 
@@ -142,6 +201,7 @@ export const PatientTimelinePage: React.FC = () => {
         >
           {(['Timeline', 'Medicines', 'Stock', 'Alerts'] as const).map((tab) => {
             const isActive = activeTab === tab;
+            const tabKey = tab === 'Timeline' ? 'tabTimeline' : tab === 'Medicines' ? 'tabMedicines' : tab === 'Stock' ? 'tabStock' : 'tabAlerts';
             return (
               <button
                 key={tab}
@@ -157,7 +217,7 @@ export const PatientTimelinePage: React.FC = () => {
                   transition: 'all 0.15s ease',
                 }}
               >
-                {tab}
+                {t(tabKey, tab)}
               </button>
             );
           })}
@@ -177,7 +237,7 @@ export const PatientTimelinePage: React.FC = () => {
                   marginBottom: '12px',
                 }}
               >
-                Today
+                {t('todayLabel', 'Today')}
               </span>
 
               <div
@@ -222,11 +282,11 @@ export const PatientTimelinePage: React.FC = () => {
                     <div>
                       {ev.status === 'Taken' ? (
                         <span style={{ color: '#16A34A', fontSize: '12.5px', fontWeight: 700 }}>
-                          Taken
+                          {t('doseTaken', 'Taken')}
                         </span>
                       ) : (
                         <span style={{ color: '#EA580C', fontSize: '12.5px', fontWeight: 700 }}>
-                          Pending
+                          {t('dailyCheckInPending', 'Pending')}
                         </span>
                       )}
                     </div>
@@ -246,7 +306,7 @@ export const PatientTimelinePage: React.FC = () => {
                   marginBottom: '12px',
                 }}
               >
-                Yesterday
+                {t('yesterdayLabel', 'Yesterday')}
               </span>
 
               <div
@@ -425,7 +485,7 @@ export const PatientTimelinePage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#102A43' }}>Patient Health Profile</h2>
+              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#102A43' }}>{t('patientHealthProfile', 'Patient Health Profile')}</h2>
               <button onClick={() => setShowProfileModal(false)} style={{ color: '#64748B', padding: '4px' }}>
                 <X size={18} />
               </button>
@@ -461,7 +521,7 @@ export const PatientTimelinePage: React.FC = () => {
               className="btn-teal"
               style={{ width: '100%', justifyContent: 'center' }}
             >
-              Close Profile
+              {t('closeProfile', 'Close Profile')}
             </button>
           </div>
         </div>

@@ -27,26 +27,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     alerts, 
     setIsSettingsOpen, 
     setIsAlertsDrawerOpen, 
-    sendHelpRequest 
+    sendHelpRequest,
+    logoutUser,
+    t
   } = useApp();
 
   const unreadAlerts = alerts.filter((a) => !a.acknowledged).length;
 
   const navItems = [
-    { id: 'dashboard' as PageId, label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { id: 'medicines' as PageId, label: 'My Medicines', icon: <Pill size={18} /> },
-    { id: 'reminder' as PageId, label: "Today's Reminders", icon: <Bell size={18} /> },
-    { id: 'timeline' as PageId, label: 'Medicine History', icon: <Clock size={18} /> },
-    { id: 'stock' as PageId, label: 'Stock & Refills', icon: <Layers size={18} /> },
-    { id: 'caregiver' as PageId, label: 'Caregivers', icon: <Users size={18} /> },
+    { id: 'dashboard' as PageId, labelKey: 'sidebarDashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'medicines' as PageId, labelKey: 'sidebarMedicines', label: 'My Medicines', icon: <Pill size={18} /> },
+    { id: 'reminder' as PageId, labelKey: 'sidebarReminders', label: "Today's Reminders", icon: <Bell size={18} /> },
+    { id: 'timeline' as PageId, labelKey: 'sidebarHistory', label: 'Medicine History', icon: <Clock size={18} /> },
+    { id: 'stock' as PageId, labelKey: 'sidebarStock', label: 'Stock & Refills', icon: <Layers size={18} /> },
+    { id: 'caregiver' as PageId, labelKey: 'sidebarCaregivers', label: 'Caregivers', icon: <Users size={18} /> },
     { 
-      id: 'notifications' as any, 
+      id: 'notifications' as unknown as PageId, 
+      labelKey: 'sidebarNotifications',
       label: 'Notifications', 
       icon: <BellRing size={18} />, 
       badge: unreadAlerts > 0 ? unreadAlerts : undefined,
     },
-    { id: 'settings' as any, label: 'Settings', icon: <Settings size={18} /> },
-    { id: 'help' as any, label: 'Help & Support', icon: <HelpCircle size={18} /> },
+    { id: 'settings' as unknown as PageId, labelKey: 'sidebarSettings', label: 'Settings', icon: <Settings size={18} /> },
+    { id: 'help' as unknown as PageId, labelKey: 'sidebarHelp', label: 'Help & Support', icon: <HelpCircle size={18} /> },
   ];
 
   const handleNavClick = (id: string) => {
@@ -63,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   };
 
   const handleLogout = () => {
-    setCurrentPage('login');
+    logoutUser();
     if (onCloseMobile) onCloseMobile();
   };
 
@@ -162,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                 >
                   {item.icon}
                 </span>
-                <span style={{ flex: 1 }}>{item.label}</span>
+                <span style={{ flex: 1 }}>{t(item.labelKey, item.label)}</span>
                 {item.badge !== undefined && (
                   <span
                     style={{
@@ -211,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           }}
         >
           <LogOut size={18} />
-          <span>Logout</span>
+          <span>{t('logout', 'Logout')}</span>
         </button>
       </div>
     </aside>
