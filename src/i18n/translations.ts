@@ -626,6 +626,51 @@ export const TRANSLATIONS: Translations = {
     en: 'Alarms trigger with chime and alerts while this tab or browser is open.',
     kn: 'ಈ ಬ್ರೌಸರ್ ಅಥವಾ ಟ್ಯಾಬ್ ತೆರೆದಿರುವಾಗ ಅಲಾರಾಂ ಶಬ್ದದೊಂದಿಗೆ ಎಚ್ಚರಿಸುತ್ತದೆ.',
   },
+  // CareLoop Follow-Up & AI Voice Assistant Demo
+  careloopFollowUpTitle: {
+    en: 'CareLoop Follow-Up Required',
+    kn: 'ಕೇರ್‌ಲೂಪ್ ಫಾಲೋ-ಅಪ್ ಅಗತ್ಯವಿದೆ',
+  },
+  careloopFollowUpSubtitle: {
+    en: 'Scheduled dose unconfirmed past scheduled time. Follow up with patient:',
+    kn: 'ನಿಗದಿತ ಸಮಯ ಮೀರಿದರೂ ಔಷಧಿ ಸೇವನೆ ದೃಢಪಟ್ಟಿಲ್ಲ. ರೋಗಿಯೊಂದಿಗೆ ಸಂಪರ್ಕಿಸಿ:',
+  },
+  sendInAppPing: {
+    en: 'Send Reminder Nudge',
+    kn: 'ಜ್ಞಾಪನೆ ಕಳುಹಿಸಿ',
+  },
+  aiVoiceDemoBtn: {
+    en: 'AI Voice Call (Demo)',
+    kn: 'ಎಐ ಧ್ವನಿ ಕರೆ (ಡೆಮೊ)',
+  },
+  directCallBtn: {
+    en: 'Direct Phone Call',
+    kn: 'ನೇರ ಫೋನ್ ಕರೆ',
+  },
+  aiVoiceModalTitle: {
+    en: 'AI Voice-Call Reminder Assistant',
+    kn: 'ಎಐ ಧ್ವನಿ ಕರೆ ಜ್ಞಾಪನೆ ಸಹಾಯಕ',
+  },
+  aiVoiceDemoDisclaimer: {
+    en: 'HACKATHON DEMO / PROTOTYPE PREVIEW: Automated adherence calling powered by Google Cloud Vertex AI & Telephony. No actual telecom carrier is billed or contacted in this simulation.',
+    kn: 'ಹ್ಯಾಕಥಾನ್ ಡೆಮೊ ಪೂರ್ವವೀಕ್ಷಣೆ: ಗೂಗಲ್ ಕ್ಲೌಡ್ ವರ್ಟೆಕ್ಸ್ ಎಐ ಮೂಲಕ ಸ್ವಯಂಚಾಲಿತ ಕರೆ ಸಿಮ್ಯುಲೇಶನ್. ಇದು ಯಾವುದೇ ನೈಜ ಟೆಲಿಕಾಂ ಕರೆ ಮಾಡುವುದಿಲ್ಲ.',
+  },
+  notificationPreferencesTitle: {
+    en: 'Notification & Reminder Preferences',
+    kn: 'ಅಧಿಸೂಚನೆ ಮತ್ತು ಜ್ಞಾಪನೆ ಆದ್ಯತೆಗಳು',
+  },
+  notificationHistoryTab: {
+    en: 'Notification & Activity Log',
+    kn: 'ಅಧಿಸೂಚನೆ ಮತ್ತು ಚಟುವಟಿಕೆ ಇತಿಹಾಸ',
+  },
+  caregiverConsentBadge: {
+    en: 'Authorized Caregiver Link',
+    kn: 'ಅಧಿಕೃತ ಆರೈಕೆದಾರ ಲಿಂಕ್',
+  },
+  verifiedConsentId: {
+    en: 'Consent ID: CL-AUTH-7821-PAT-RAMESH',
+    kn: 'ಒಪ್ಪಿಗೆ ಐಡಿ: CL-AUTH-7821-PAT-RAMESH',
+  },
 };
 
 /**

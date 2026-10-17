@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Bell, AlertTriangle, AlertCircle, Check } from 'lucide-react';
 
@@ -9,9 +9,12 @@ export const AlertsDrawer: React.FC = () => {
     alerts, 
     acknowledgeAlert,
     medicines,
+    timeline,
     setCurrentPage,
     t
   } = useApp();
+
+  const [drawerTab, setDrawerTab] = useState<'alerts' | 'history'>('alerts');
 
   if (!isAlertsDrawerOpen) return null;
 
@@ -46,7 +49,7 @@ export const AlertsDrawer: React.FC = () => {
         {/* Drawer Header */}
         <div
           style={{
-            padding: '18px 20px',
+            padding: '16px 20px',
             borderBottom: '1px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
@@ -65,12 +68,84 @@ export const AlertsDrawer: React.FC = () => {
           </button>
         </div>
 
+        {/* Tab Selector: Alerts vs History */}
+        <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', backgroundColor: '#F8FAFC' }}>
+          <button
+            onClick={() => setDrawerTab('alerts')}
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              fontSize: '12.5px',
+              fontWeight: drawerTab === 'alerts' ? 700 : 500,
+              color: drawerTab === 'alerts' ? '#0D9488' : '#64748B',
+              borderBottom: drawerTab === 'alerts' ? '2px solid #0D9488' : '2px solid transparent',
+              backgroundColor: drawerTab === 'alerts' ? '#FFFFFF' : 'transparent',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Urgent Alerts ({alerts.filter((a) => !a.acknowledged).length + lowStockMeds.length})
+          </button>
+          <button
+            onClick={() => setDrawerTab('history')}
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              fontSize: '12.5px',
+              fontWeight: drawerTab === 'history' ? 700 : 500,
+              color: drawerTab === 'history' ? '#0D9488' : '#64748B',
+              borderBottom: drawerTab === 'history' ? '2px solid #0D9488' : '2px solid transparent',
+              backgroundColor: drawerTab === 'history' ? '#FFFFFF' : 'transparent',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            History & Log ({timeline.length})
+          </button>
+        </div>
+
         {/* Content list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* Section: Urgent Help Requests */}
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-            Urgent Patient Care Requests
-          </div>
+          {drawerTab === 'history' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                System Reminders & Event History
+              </div>
+              {timeline.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '13px', padding: '20px' }}>No activity logged.</p>
+              ) : (
+                timeline.map((ev) => (
+                  <div
+                    key={ev.id}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      fontSize: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                      <strong style={{ color: '#102A43' }}>{ev.title}</strong>
+                      <span style={{ color: '#94A3B8', fontSize: '11px' }}>{ev.dateGroup} • {ev.time}</span>
+                    </div>
+                    <p style={{ color: '#64748B', margin: 0, lineHeight: 1.35 }}>
+                      {ev.description || ev.medicineName}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Section: Urgent Help Requests */}
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Urgent Patient Care Requests
+              </div>
 
           {alerts.length === 0 ? (
             <div style={{ padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', fontSize: '12.5px', color: '#64748B' }}>
@@ -157,6 +232,8 @@ export const AlertsDrawer: React.FC = () => {
               </button>
             </div>
           ))}
+            </>
+          )}
         </div>
       </div>
     </div>

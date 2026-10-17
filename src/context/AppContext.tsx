@@ -15,6 +15,7 @@ import { INITIAL_MEDICINES, INITIAL_TIMELINE, INITIAL_PATIENTS, INITIAL_ALERTS }
 import { getTranslation } from '../i18n/translations';
 import { isFirebaseConfigured, auth, googleProvider, signInWithPopup, firebaseSignOut } from '../services/firebase';
 import { time12To24, time24To12, playAlarmChime } from '../utils/alarmUtils';
+import { cloudRunApi } from '../services/api';
 
 interface ToastMessage {
   id: string;
@@ -111,6 +112,13 @@ interface AppContextType {
   updateMedicineAlarm: (medicineId: string, enabled: boolean, alarmTime: string) => void;
   notificationPermission: NotificationPermission;
   requestNotificationPermission: () => Promise<NotificationPermission>;
+
+  // CareLoop Follow-Up & AI Voice Assistant Demo
+  isAiVoiceModalOpen: boolean;
+  setIsAiVoiceModalOpen: (open: boolean) => void;
+  aiVoiceModalData: { patientName: string; medicineName: string; doseTime: string; patientPhone?: string; medicineId?: string } | null;
+  openAiVoiceModal: (data?: { patientName: string; medicineName: string; doseTime: string; patientPhone?: string; medicineId?: string }) => void;
+  sendCaregiverNudge: (patientName: string, medicineName: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -146,6 +154,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAlertsDrawerOpen, setIsAlertsDrawerOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+
+  // CareLoop Follow-Up & AI Voice Assistant Demo State
+  const [isAiVoiceModalOpen, setIsAiVoiceModalOpen] = useState(false);
+  const [aiVoiceModalData, setAiVoiceModalData] = useState<{
+    patientName: string;
+    medicineName: string;
+    doseTime: string;
+    patientPhone?: string;
+    medicineId?: string;
+  } | null>(null);
+
+  const openAiVoiceModal = useCallback((data?: {
+    patientName: string;
+    medicineName: string;
+    doseTime: string;
+    patientPhone?: string;
+    medicineId?: string;
+  }) => {
+    setAiVoiceModalData(data || {
+      patientName: 'Ramesh Kumar',
+      medicineName: 'Metformin 500mg',
+      doseTime: '08:00 AM',
+      patientPhone: '+91 98765 43210',
+      medicineId: 'med-1',
+    });
+    setIsAiVoiceModalOpen(true);
+  }, []);
 
   // Medicine Alarm System State (Requirement 2)
   const [activeAlarm, setActiveAlarm] = useState<Medicine | null>(null);
@@ -663,6 +698,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Urgent alert sent to caregiver Anitha Sharma.', 'error');
   };
 
+  const sendCaregiverNudge = useCallback(async (patientName: string, medicineName: string) => {
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const nudgeEvent: TimelineEvent = {
+      id: `nudge-${Date.now()}`,
+      dateGroup: 'Today',
+      time: now,
+      title: `Caregiver Nudge Dispatched`,
+      medicineName: medicineName,
+      status: 'Pending',
+      description: `Anitha Sharma sent an in-app reminder ping for ${medicineName} to ${patientName}.`,
+    };
+    setTimeline((prev) => [nudgeEvent, ...prev]);
+
+    await cloudRunApi.dispatchCaregiverAlert({
+      patientId: 'patient-ramesh',
+      patientName,
+      caregiverId: 'caregiver-anitha',
+      medicineName,
+      reason: `Caregiver follow-up nudge sent for unconfirmed dose: ${medicineName}`,
+      urgency: 'medium',
+    });
+
+    showToast(`Follow-up reminder ping sent to ${patientName}'s device.`, 'info');
+  }, [showToast]);
+
   const updateStock = (medicineId: string, newTablets: number) => {
     let updatedMedName = 'Medicine';
     setMedicines((prev) =>
@@ -808,6 +868,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateMedicineAlarm,
         notificationPermission,
         requestNotificationPermission,
+        isAiVoiceModalOpen,
+        setIsAiVoiceModalOpen,
+        aiVoiceModalData,
+        openAiVoiceModal,
+        sendCaregiverNudge,
       }}
     >
       {children}

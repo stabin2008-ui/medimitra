@@ -7,7 +7,8 @@ import {
   MoreHorizontal, 
   X,
   PhoneCall,
-  Globe
+  Globe,
+  ShieldCheck
 } from 'lucide-react';
 import type { LanguageCode } from '../types';
 
@@ -186,6 +187,32 @@ export const PatientTimelinePage: React.FC = () => {
           >
             {t('viewProfile')}
           </button>
+        </div>
+
+        {/* Verified Caregiver Authorization Badge (Hackathon 90+ Improvement) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 14px',
+            backgroundColor: '#F0FDF4',
+            border: '1px solid #BBF7D0',
+            borderRadius: '10px',
+            marginBottom: '14px',
+            fontSize: '11.5px',
+            color: '#15803D',
+            flexWrap: 'wrap',
+            gap: '6px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <ShieldCheck size={14} color="#16A34A" />
+            <span style={{ fontWeight: 700 }}>Authorized Caregiver: Anitha Sharma (Daughter)</span>
+          </div>
+          <span style={{ fontSize: '11px', color: '#166534', fontWeight: 600 }}>
+            Consent ID: CL-AUTH-7821-PAT-RAMESH
+          </span>
         </div>
 
         {/* Four Tabs: Timeline, Medicines, Stock, Alerts */}

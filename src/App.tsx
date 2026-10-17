@@ -4,6 +4,7 @@ import { MedicineAlarmModal } from './components/MedicineAlarmModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AlertsDrawer } from './components/AlertsDrawer';
 import { EmergencyCallModal } from './components/EmergencyCallModal';
+import { AiVoiceCallModal } from './components/AiVoiceCallModal';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
@@ -51,6 +52,7 @@ const AppRouter: React.FC = () => {
       <SettingsModal />
       <AlertsDrawer />
       <EmergencyCallModal />
+      <AiVoiceCallModal />
     </div>
   );
 };

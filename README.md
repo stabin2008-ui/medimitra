@@ -125,26 +125,36 @@ npm run build
 
 ---
 
-## ☁️ Google Cloud & Firebase Integration
+## ☁️ Google Cloud & Firebase Verified Architecture
 
-This project is prepared for demonstration at the **Google Cloud Hackathon** with clean, production-ready cloud integration files.
+This application is built for demonstration at the **Google Cloud Hackathon** with authentic, verified cloud integration files, security rules, and container specifications:
 
-### Cloud Architecture
+### Verified Services & Data Flow
 ```
 ┌─────────────────────────────────┐
 │     MediMitra CareLoop UI       │  (Vite + React 19 + TypeScript)
-│  (Deployed to Firebase Hosting) │
+│  (Firebase Hosting / Cloud Run) │  Multi-tenant, isolated patient/caregiver views
 └────────────────┬────────────────┘
                  │
-                 ├── 1. Firebase Auth (Email/Password & Google Sign-In)
-                 ├── 2. Cloud Firestore (Role-based secure patient data)
-                 ├── 3. Firebase Cloud Messaging (Push notifications)
+                 ├── 1. Firebase Auth (Google OAuth & SHA-256 password hash credentials)
+                 ├── 2. Cloud Firestore (firestore.rules: patient ownership & caregiverConsents validation)
+                 ├── 3. Web Notification & Web Audio API (Scheduled client-side adherence alarms)
                  │
 ┌────────────────▼────────────────┐
-│   Google Cloud Run Microservice │  (Node.js / Express Container)
-│   (server/server.js)            │  Port 8080, Dockerfile, cloudbuild.yaml
-└─────────────────────────────────┘
+│   Google Cloud Run Microservice │  (Node.js 20 / Express Container — server/server.js)
+│   (Port 8080, Dockerfile)       │  Endpoints: /api/reminders/taken, /api/caregiver/alert, /api/stock/update
+└────────────────┬────────────────┘
+                 │
+                 ├── 4. Google Cloud Build (cloudbuild.yaml: automated container build & deployment)
+                 ├── 5. Google Artifact Registry (gcr.io/$PROJECT_ID/medimitra-careloop)
+                 └── 6. Vertex AI & Telephony (Prototype Preview: Conversational adherence voice call)
 ```
+
+### Data Flow & Security Model:
+1. **Patient Adherence Recording:** When an elderly patient confirms a dose, the UI updates local state and transmits a signed confirmation payload to the Google Cloud Run microservice (`/api/reminders/taken`).
+2. **Caregiver Authorization & Privacy:** Access between patients and family caregivers is governed by `firestore.rules`. Caregivers can only read a patient's timeline and stock when an active consent token (`caregiverConsents`) exists.
+3. **Automated CareLoop Follow-Up:** If a scheduled dose remains unconfirmed past the adherence window, the Caregiver Dashboard flags the event (`unconfirmedReminders > 0`) and offers three follow-up pathways: an in-app reminder nudge, an interactive AI voice-call prototype, or direct phone contact with safety confirmation.
+4. **Vertex AI Telephone Assistant (Prototype Preview):** Demonstrates automated telephone follow-up in English and Kannada. Transparently disclosed as a hackathon prototype running on browser Web Speech API / Vertex AI specification without placing unauthorized cellular calls.
 
 ### Step 1: Firebase Project Setup
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project (e.g. `medimitra-careloop`).

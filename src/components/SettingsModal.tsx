@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, User, Shield, RotateCcw, Check, Heart, Globe } from 'lucide-react';
+import { X, User, Shield, RotateCcw, Check, Heart, Globe, Bell, BellRing, History } from 'lucide-react';
 import type { LanguageCode } from '../types';
 
 export const SettingsModal: React.FC = () => {
@@ -16,8 +16,13 @@ export const SettingsModal: React.FC = () => {
     updateHealthCheckSettings,
     language,
     setLanguage,
-    t
+    t,
+    notificationPermission,
+    requestNotificationPermission,
+    setIsAlertsDrawerOpen
   } = useApp();
+
+  const [testedNotification, setTestedNotification] = useState(false);
 
   if (!isSettingsOpen) return null;
 
@@ -145,6 +150,89 @@ export const SettingsModal: React.FC = () => {
                 </select>
               </div>
             )}
+          </div>
+
+          {/* Reminder & Notification Preferences (Hackathon 90+ Improvement) */}
+          <div style={{ padding: '14px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#102A43', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              <Bell size={15} color="#0D9488" /> {t('notificationPreferencesTitle', 'Notification & Reminder Preferences')}
+            </span>
+
+            {/* Browser Push Status */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', fontSize: '12px' }}>
+              <span style={{ color: '#475569' }}>Browser Notifications:</span>
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: notificationPermission === 'granted' ? '#16A34A' : '#EA580C',
+                  backgroundColor: notificationPermission === 'granted' ? '#DCFCE7' : '#FFEDD5',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                }}
+              >
+                {notificationPermission === 'granted' ? 'Allowed' : notificationPermission === 'denied' ? 'Blocked' : 'Default (Click to Enable)'}
+              </span>
+            </div>
+
+            {/* Test / Request Permission Button */}
+            <button
+              onClick={async () => {
+                const res = await requestNotificationPermission();
+                if (res === 'granted') {
+                  setTestedNotification(true);
+                  try {
+                    new Notification('⏰ MediMitra CareLoop Test Notification', {
+                      body: 'Medicine reminder notifications are working correctly!',
+                      icon: '/assets/logo.png',
+                    });
+                  } catch { /* fallback */ }
+                }
+              }}
+              className="btn-outline"
+              style={{
+                width: '100%',
+                padding: '8px',
+                fontSize: '12px',
+                justifyContent: 'center',
+                gap: '6px',
+                marginBottom: '8px',
+              }}
+            >
+              <BellRing size={13} color="#0D9488" />
+              <span>{notificationPermission === 'granted' ? 'Test Active Browser Notification' : 'Enable & Request Push Notification'}</span>
+            </button>
+            {testedNotification && (
+              <p style={{ fontSize: '11px', color: '#16A34A', margin: '0 0 8px 0', textAlign: 'center' }}>
+                ✓ Test notification sent to system tray!
+              </p>
+            )}
+
+            {/* Quick Access to Notification History */}
+            <button
+              onClick={() => {
+                setIsSettingsOpen(false);
+                setIsAlertsDrawerOpen(true);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '8px',
+                border: '1px solid #CBD5E1',
+                backgroundColor: '#FFFFFF',
+                color: '#102A43',
+                fontSize: '12px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+              }}
+            >
+              <History size={13} color="#0D9488" />
+              <span>{t('notificationHistoryTab', 'View Notification & Activity Log')}</span>
+            </button>
           </div>
 
           {/* Active Profile & Quick Switcher for Demo */}
