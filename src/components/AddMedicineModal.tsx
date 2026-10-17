@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, Plus, AlertCircle } from 'lucide-react';
+import { X, Plus, AlertCircle, Bell } from 'lucide-react';
+import { time24To12 } from '../utils/alarmUtils';
 
 interface AddMedicineModalProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onCl
   const [dosage, setDosage] = useState('');
   const [instructions, setInstructions] = useState('After Breakfast');
   const [doseTime, setDoseTime] = useState('08:30 AM');
+  const [alarmTime, setAlarmTime] = useState('08:30');
+  const [alarmEnabled, setAlarmEnabled] = useState(true);
   const [timePeriod, setTimePeriod] = useState<'Morning' | 'Afternoon' | 'Evening' | 'Night'>('Morning');
   const [tabletsLeft, setTabletsLeft] = useState('30');
   const [dailyDose, setDailyDose] = useState('1');
@@ -36,12 +39,14 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onCl
       name: `${name.trim()} ${dosage.trim()}`.trim(),
       dosage: dosage.trim() || 'Standard',
       instructions: instructions.trim(),
-      doseTime: doseTime.trim(),
+      doseTime: alarmTime ? time24To12(alarmTime) : doseTime.trim(),
       timePeriod,
       tabletsLeft: stock,
       dailyDose: dose,
       image: '/assets/pill_metformin.jpg',
       details: details.trim() || `Take ${dose} dose with water as instructed.`,
+      alarmEnabled,
+      alarmTime,
     });
 
     onClose();
@@ -181,19 +186,24 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onCl
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '6px' }}>
-                Reminder Time
+                Reminder / Alarm Time
               </label>
               <input
-                type="text"
-                placeholder="e.g. 08:30 AM"
-                value={doseTime}
-                onChange={(e) => setDoseTime(e.target.value)}
+                type="time"
+                value={alarmTime}
+                onChange={(e) => {
+                  setAlarmTime(e.target.value);
+                  setDoseTime(time24To12(e.target.value));
+                }}
                 style={{
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: '8px',
                   border: '1px solid #CBD5E1',
                   fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#102A43',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
@@ -216,6 +226,21 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({ isOpen, onCl
                 }}
               />
             </div>
+          </div>
+
+          {/* Alarm Toggle Card */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: alarmEnabled ? '#F0FDFA' : '#F8FAFC', borderRadius: '10px', border: alarmEnabled ? '1.5px solid #99F6E4' : '1px solid #E2E8F0' }}>
+            <input
+              type="checkbox"
+              id="add-alarm-enabled"
+              checked={alarmEnabled}
+              onChange={(e) => setAlarmEnabled(e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: '#0D9488', cursor: 'pointer' }}
+            />
+            <label htmlFor="add-alarm-enabled" style={{ fontSize: '13px', fontWeight: 600, color: alarmEnabled ? '#0F766E' : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Bell size={15} color={alarmEnabled ? '#0D9488' : '#64748B'} />
+              <span>{t('enableAlarmForMedicine', 'Enable Alarm for this reminder')} ({time24To12(alarmTime)})</span>
+            </label>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

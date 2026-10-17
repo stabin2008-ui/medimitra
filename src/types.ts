@@ -45,6 +45,8 @@ export interface Medicine {
   lastTakenTime?: string;
   image: string;
   details?: string;
+  alarmEnabled?: boolean;
+  alarmTime?: string; // 24-hr format "HH:MM" for time picker (e.g. "08:30")
 }
 
 export interface TimelineEvent {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { Toast } from './components/Toast';
+import { MedicineAlarmModal } from './components/MedicineAlarmModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AlertsDrawer } from './components/AlertsDrawer';
 import { EmergencyCallModal } from './components/EmergencyCallModal';
@@ -47,7 +47,7 @@ const AppRouter: React.FC = () => {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {renderCurrentView()}
       </main>
-      <Toast />
+      <MedicineAlarmModal />
       <SettingsModal />
       <AlertsDrawer />
       <EmergencyCallModal />

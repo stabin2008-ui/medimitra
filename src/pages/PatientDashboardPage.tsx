@@ -10,8 +10,11 @@ import {
   Heart,
   CheckCircle2,
   AlertCircle,
-  Plus
+  Plus,
+  BellRing,
+  BellOff
 } from 'lucide-react';
+import { time12To24 } from '../utils/alarmUtils';
 
 export const PatientDashboardPage: React.FC = () => {
   const { 
@@ -21,6 +24,7 @@ export const PatientDashboardPage: React.FC = () => {
     healthCheck, 
     completeHealthCheck, 
     snoozeHealthCheck,
+    updateMedicineAlarm,
     t 
   } = useApp();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -440,7 +444,31 @@ export const PatientDashboardPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            onClick={() => {
+                              const curTime = med.alarmTime || time12To24(med.doseTime || '08:30 AM');
+                              updateMedicineAlarm(med.id, !med.alarmEnabled, curTime);
+                            }}
+                            title={med.alarmEnabled ? 'Alarm active. Click to toggle.' : 'Alarm off. Click to enable.'}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              backgroundColor: med.alarmEnabled ? '#F0FDFA' : '#F1F5F9',
+                              color: med.alarmEnabled ? '#0D9488' : '#94A3B8',
+                              border: `1px solid ${med.alarmEnabled ? '#99F6E4' : '#E2E8F0'}`,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {med.alarmEnabled ? <BellRing size={12} /> : <BellOff size={12} />}
+                            <span>{med.alarmEnabled ? t('alarmOn', 'Alarm Active') : t('alarmOff', 'Alarm Off')}</span>
+                          </button>
+
                           {isTaken ? (
                             <span className="badge-taken">{t('doseTakenRecorded', 'Taken')}</span>
                           ) : (

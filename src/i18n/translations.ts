@@ -564,6 +564,68 @@ export const TRANSLATIONS: Translations = {
     en: 'No activity recorded yet.',
     kn: 'ಇನ್ನೂ ಯಾವುದೇ ಚಟುವಟಿಕೆ ದಾಖಲಾಗಿಲ್ಲ.',
   },
+
+  // Medicine Alarm Option (Requirement 2)
+  setAlarm: {
+    en: 'Set Alarm',
+    kn: 'ಅಲಾರಾಂ ಹೊಂದಿಸಿ',
+  },
+  editAlarm: {
+    en: 'Edit Alarm',
+    kn: 'ಅಲಾರಾಂ ಬದಲಾಯಿಸಿ',
+  },
+  alarmOn: {
+    en: 'Alarm Active',
+    kn: 'ಅಲಾರಾಂ ಸಕ್ರಿಯ',
+  },
+  alarmOff: {
+    en: 'Alarm Off',
+    kn: 'ಅಲಾರಾಂ ಆಫ್',
+  },
+  alarmTime: {
+    en: 'Alarm Time',
+    kn: 'ಅಲಾರಾಂ ಸಮಯ',
+  },
+  enableAlarmForMedicine: {
+    en: 'Enable Alarm for this reminder',
+    kn: 'ಈ ಜ್ಞಾಪನೆಗೆ ಅಲಾರಾಂ ಸಕ್ರಿಯಗೊಳಿಸಿ',
+  },
+  alarmTriggeredTitle: {
+    en: 'Medicine Alarm Alert',
+    kn: 'ಔಷಧಿ ಅಲಾರಾಂ ಎಚ್ಚರಿಕೆ',
+  },
+  alarmTriggeredSubtitle: {
+    en: 'Scheduled reminder time has arrived for:',
+    kn: 'ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ನಿಗದಿತ ಸಮಯ ಬಂದಿದೆ:',
+  },
+  takeMedicineNow: {
+    en: 'Take Medicine Now',
+    kn: 'ಈಗಲೇ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳಿ',
+  },
+  snooze10Min: {
+    en: 'Snooze 10 min',
+    kn: '10 ನಿಮಿಷ ಸ್ನೂಜ್ ಮಾಡಿ',
+  },
+  dismissAlarm: {
+    en: 'Dismiss',
+    kn: 'ರದ್ದುಮಾಡಿ',
+  },
+  enableBrowserNotifications: {
+    en: 'Enable Browser Notifications',
+    kn: 'ಬ್ರೌಸರ್ ಸೂಚನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ',
+  },
+  notificationsActive: {
+    en: 'Browser notifications active',
+    kn: 'ಬ್ರೌಸರ್ ಸೂಚನೆಗಳು ಸಕ್ರಿಯವಾಗಿವೆ',
+  },
+  notificationsBlocked: {
+    en: 'Notifications blocked in browser. Click lock icon in address bar to allow.',
+    kn: 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೂಚನೆಗಳನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ. ಅನುಮತಿಸಲು ವಿಳಾಸ ಪಟ್ಟಿಯಲ್ಲಿರುವ ಲಾಕ್ ಐಕಾನ್ ಕ್ಲಿಕ್ ಮಾಡಿ.',
+  },
+  alarmOpenBrowserNotice: {
+    en: 'Alarms trigger with chime and alerts while this tab or browser is open.',
+    kn: 'ಈ ಬ್ರೌಸರ್ ಅಥವಾ ಟ್ಯಾಬ್ ತೆರೆದಿರುವಾಗ ಅಲಾರಾಂ ಶಬ್ದದೊಂದಿಗೆ ಎಚ್ಚರಿಸುತ್ತದೆ.',
+  },
 };
 
 /**

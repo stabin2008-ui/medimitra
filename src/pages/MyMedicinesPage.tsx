@@ -17,8 +17,11 @@ import {
   AlertCircle,
   Pill,
   Globe,
-  PhoneCall
+  PhoneCall,
+  BellRing,
+  BellOff
 } from 'lucide-react';
+import { time12To24 } from '../utils/alarmUtils';
 
 export const MyMedicinesPage: React.FC = () => {
   const { 
@@ -28,6 +31,7 @@ export const MyMedicinesPage: React.FC = () => {
     setIsEmergencyModalOpen,
     language,
     setLanguage,
+    updateMedicineAlarm,
     t
   } = useApp();
 
@@ -229,9 +233,26 @@ export const MyMedicinesPage: React.FC = () => {
                       <h2 style={{ fontSize: '15.5px', fontWeight: 700, color: '#102A43', marginBottom: '3px' }}>
                         {med.name}
                       </h2>
-                      <p style={{ fontSize: '13px', color: '#64748B' }}>
-                        {med.instructions} • <span style={{ color: '#0D9488', fontWeight: 600 }}>{med.doseTime}</span>
-                      </p>
+                      <div style={{ fontSize: '13px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span>{med.instructions} • <strong style={{ color: '#0D9488' }}>{med.doseTime}</strong></span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '2px 7px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            backgroundColor: med.alarmEnabled ? '#F0FDFA' : '#F1F5F9',
+                            color: med.alarmEnabled ? '#0D9488' : '#94A3B8',
+                            border: `1px solid ${med.alarmEnabled ? '#99F6E4' : '#E2E8F0'}`,
+                          }}
+                        >
+                          {med.alarmEnabled ? <BellRing size={11} /> : <BellOff size={11} />}
+                          <span>{med.alarmEnabled ? t('alarmOn', 'Alarm Active') : t('alarmOff', 'Alarm Off')}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -299,6 +320,28 @@ export const MyMedicinesPage: React.FC = () => {
                       >
                         <Edit size={14} color="#0D9488" />
                         <span>{t('editMedicine', 'Edit Routine')}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const curTime = med.alarmTime || time12To24(med.doseTime || '08:30 AM');
+                          updateMedicineAlarm(med.id, !med.alarmEnabled, curTime);
+                          setActiveMenuId(null);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          width: '100%',
+                          padding: '8px 12px',
+                          fontSize: '13px',
+                          color: '#334155',
+                          borderRadius: '6px',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {med.alarmEnabled ? <BellOff size={14} color="#EA580C" /> : <BellRing size={14} color="#0D9488" />}
+                        <span>{med.alarmEnabled ? t('alarmOff', 'Disable Alarm') : t('setAlarm', 'Enable Alarm')}</span>
                       </button>
 
                       <button

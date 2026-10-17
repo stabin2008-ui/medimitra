@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Bell } from 'lucide-react';
 import type { Medicine } from '../types';
+import { time12To24, time24To12 } from '../utils/alarmUtils';
 
 interface EditMedicineModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
   const [dosage, setDosage] = useState('');
   const [instructions, setInstructions] = useState('');
   const [doseTime, setDoseTime] = useState('');
+  const [alarmTime, setAlarmTime] = useState('08:30');
+  const [alarmEnabled, setAlarmEnabled] = useState(false);
   const [timePeriod, setTimePeriod] = useState<'Morning' | 'Afternoon' | 'Evening' | 'Night'>('Morning');
   const [tabletsLeft, setTabletsLeft] = useState('30');
   const [dailyDose, setDailyDose] = useState('1');
@@ -28,6 +31,8 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
       setDosage(medicine.dosage);
       setInstructions(medicine.instructions);
       setDoseTime(medicine.doseTime);
+      setAlarmTime(medicine.alarmTime || time12To24(medicine.doseTime || '08:30 AM'));
+      setAlarmEnabled(!!medicine.alarmEnabled);
       setTimePeriod(medicine.timePeriod);
       setTabletsLeft(String(medicine.tabletsLeft));
       setDailyDose(String(medicine.dailyDose));
@@ -52,11 +57,13 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
       name: name.trim(),
       dosage: dosage.trim() || 'Standard',
       instructions: instructions.trim(),
-      doseTime: doseTime.trim(),
+      doseTime: alarmTime ? time24To12(alarmTime) : (doseTime.trim() || '08:30 AM'),
       timePeriod,
       tabletsLeft: stock,
       dailyDose: dose,
       details: details.trim() || `Take ${dose} dose with water as instructed.`,
+      alarmEnabled,
+      alarmTime,
     });
 
     onClose();
@@ -191,18 +198,24 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#102A43', marginBottom: '6px' }}>
-                Reminder Time
+                Reminder / Alarm Time
               </label>
               <input
-                type="text"
-                value={doseTime}
-                onChange={(e) => setDoseTime(e.target.value)}
+                type="time"
+                value={alarmTime}
+                onChange={(e) => {
+                  setAlarmTime(e.target.value);
+                  setDoseTime(time24To12(e.target.value));
+                }}
                 style={{
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: '8px',
                   border: '1px solid #CBD5E1',
                   fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#102A43',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
@@ -224,6 +237,21 @@ export const EditMedicineModal: React.FC<EditMedicineModalProps> = ({ isOpen, on
                 }}
               />
             </div>
+          </div>
+
+          {/* Alarm Toggle Card */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: alarmEnabled ? '#F0FDFA' : '#F8FAFC', borderRadius: '10px', border: alarmEnabled ? '1.5px solid #99F6E4' : '1px solid #E2E8F0' }}>
+            <input
+              type="checkbox"
+              id="edit-alarm-enabled"
+              checked={alarmEnabled}
+              onChange={(e) => setAlarmEnabled(e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: '#0D9488', cursor: 'pointer' }}
+            />
+            <label htmlFor="edit-alarm-enabled" style={{ fontSize: '13px', fontWeight: 600, color: alarmEnabled ? '#0F766E' : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Bell size={15} color={alarmEnabled ? '#0D9488' : '#64748B'} />
+              <span>{t('enableAlarmForMedicine', 'Enable Alarm for this reminder')} ({time24To12(alarmTime)})</span>
+            </label>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

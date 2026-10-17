@@ -16,6 +16,8 @@ export const INITIAL_MEDICINES: Medicine[] = [
     status: 'Pending',
     image: '/assets/pill_metformin.jpg',
     details: 'Take 1 tablet with water after morning meal.',
+    alarmEnabled: true,
+    alarmTime: '08:30',
   },
   {
     id: 'med-2',
@@ -32,6 +34,8 @@ export const INITIAL_MEDICINES: Medicine[] = [
     status: 'Pending',
     image: '/assets/pill_vitamind3.jpg',
     details: 'Weekly softgel capsule with a glass of milk or water.',
+    alarmEnabled: false,
+    alarmTime: '12:30',
   },
   {
     id: 'med-3',
@@ -48,6 +52,8 @@ export const INITIAL_MEDICINES: Medicine[] = [
     status: 'Pending',
     image: '/assets/pill_telmisartan.jpg',
     details: 'Blood pressure regulation. Take at regular time.',
+    alarmEnabled: true,
+    alarmTime: '17:30',
   },
   {
     id: 'med-4',
@@ -64,6 +70,8 @@ export const INITIAL_MEDICINES: Medicine[] = [
     status: 'Pending',
     image: '/assets/pill_atorvastatin.jpg',
     details: 'Cholesterol control. Take with or without food.',
+    alarmEnabled: false,
+    alarmTime: '20:30',
   },
   {
     id: 'med-5',
@@ -80,6 +88,8 @@ export const INITIAL_MEDICINES: Medicine[] = [
     status: 'Pending',
     image: '/assets/pill_metformin.jpg',
     details: 'Bone health supplement. Swallow whole with water.',
+    alarmEnabled: false,
+    alarmTime: '22:00',
   },
 ];
 

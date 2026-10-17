@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Logo } from '../components/Logo';
 import { MobileBottomNav } from '../components/MobileBottomNav';
@@ -12,8 +12,12 @@ import {
   AlertCircle,
   Globe,
   Plus,
-  Pill
+  Pill,
+  BellRing,
+  BellOff,
+  Check
 } from 'lucide-react';
+import { time12To24, time24To12 } from '../utils/alarmUtils';
 
 export const TodaysReminderPage: React.FC = () => {
   const { 
@@ -25,7 +29,10 @@ export const TodaysReminderPage: React.FC = () => {
     setIsEmergencyModalOpen,
     language,
     setLanguage,
-    t
+    t,
+    updateMedicineAlarm,
+    notificationPermission,
+    requestNotificationPermission
   } = useApp();
 
   const currentMed = medicines.find((m) => m.name.includes('Metformin')) || medicines[0];
@@ -34,6 +41,16 @@ export const TodaysReminderPage: React.FC = () => {
   const [selectedSnooze, setSelectedSnooze] = useState<number | null>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [helpReason, setHelpReason] = useState('Having difficulty with dosage instructions');
+  const [isEditingAlarm, setIsEditingAlarm] = useState(false);
+  const [pickerTime, setPickerTime] = useState(() => {
+    return currentMed?.alarmTime || (currentMed?.doseTime ? time12To24(currentMed.doseTime) : '08:30');
+  });
+
+  useEffect(() => {
+    if (currentMed) {
+      setPickerTime(currentMed.alarmTime || time12To24(currentMed.doseTime || '08:30 AM'));
+    }
+  }, [currentMed]);
 
   const handleTaken = () => {
     if (currentMed) {
@@ -282,6 +299,142 @@ export const TodaysReminderPage: React.FC = () => {
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </div>
+              </div>
+
+              {/* Medicine Alarm Section (Requirement 2) */}
+              <div
+                style={{
+                  padding: '14px 16px',
+                  backgroundColor: currentMed.alarmEnabled ? '#F0FDFA' : '#F8FAFC',
+                  border: currentMed.alarmEnabled ? '1.5px solid #99F6E4' : '1px solid #E2E8F0',
+                  borderRadius: '14px',
+                  marginBottom: '20px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        backgroundColor: currentMed.alarmEnabled ? '#CCFBF1' : '#E2E8F0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {currentMed.alarmEnabled ? (
+                        <BellRing size={20} color="#0D9488" />
+                      ) : (
+                        <BellOff size={20} color="#64748B" />
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#102A43' }}>
+                        {currentMed.alarmEnabled ? t('alarmOn', 'Alarm Active') : t('alarmOff', 'Alarm Off')}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748B' }}>
+                        {currentMed.alarmEnabled
+                          ? `${t('alarmTime', 'Alarm Time')}: ${currentMed.doseTime || time24To12(currentMed.alarmTime || '08:30')}`
+                          : t('enableAlarmForMedicine', 'Enable Alarm for this reminder')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => setIsEditingAlarm(!isEditingAlarm)}
+                      className="btn-outline"
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        borderRadius: '8px',
+                        borderColor: '#0D9488',
+                        color: '#0D9488',
+                      }}
+                    >
+                      {isEditingAlarm ? t('cancel', 'Cancel') : currentMed.alarmEnabled ? t('editAlarm', 'Edit Alarm') : t('setAlarm', 'Set Alarm')}
+                    </button>
+
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', userSelect: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!currentMed.alarmEnabled}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const curTime = currentMed.alarmTime || time12To24(currentMed.doseTime || '08:30 AM');
+                          updateMedicineAlarm(currentMed.id, checked, curTime);
+                        }}
+                        style={{ width: '18px', height: '18px', accentColor: '#0D9488', cursor: 'pointer' }}
+                        aria-label="Toggle Alarm"
+                      />
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: currentMed.alarmEnabled ? '#0D9488' : '#64748B' }}>
+                        {currentMed.alarmEnabled ? 'ON' : 'OFF'}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Alarm Time Picker Row (when editing or setting alarm) */}
+                {isEditingAlarm && (
+                  <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 600, color: '#102A43' }}>
+                        {t('alarmTime', 'Alarm Time')}:
+                      </label>
+                      <input
+                        type="time"
+                        value={pickerTime}
+                        onChange={(e) => setPickerTime(e.target.value)}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          border: '1.5px solid #0D9488',
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          color: '#102A43',
+                          backgroundColor: '#FFFFFF',
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          updateMedicineAlarm(currentMed.id, true, pickerTime);
+                          setIsEditingAlarm(false);
+                        }}
+                        className="btn-teal"
+                        style={{ padding: '6px 14px', fontSize: '12.5px' }}
+                      >
+                        <Check size={14} /> {t('save', 'Save')}
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#64748B', flexWrap: 'wrap', gap: '6px' }}>
+                      <span>{t('alarmOpenBrowserNotice', 'Alarms trigger while this tab or browser is open.')}</span>
+                      {notificationPermission !== 'granted' ? (
+                        <button
+                          onClick={requestNotificationPermission}
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            color: '#0D9488',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {t('enableBrowserNotifications', 'Enable Browser Notifications')}
+                        </button>
+                      ) : (
+                        <span style={{ color: '#16A34A', fontWeight: 600 }}>
+                          ✓ {t('notificationsActive', 'Browser notifications active')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Three Large Action Buttons */}

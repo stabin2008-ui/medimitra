@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { 
   PageId, 
   UserRole, 
@@ -14,6 +14,7 @@ import type {
 import { INITIAL_MEDICINES, INITIAL_TIMELINE, INITIAL_PATIENTS, INITIAL_ALERTS } from '../data/mockData';
 import { getTranslation } from '../i18n/translations';
 import { isFirebaseConfigured, auth, googleProvider, signInWithPopup, firebaseSignOut } from '../services/firebase';
+import { time12To24, time24To12, playAlarmChime } from '../utils/alarmUtils';
 
 interface ToastMessage {
   id: string;
@@ -103,6 +104,13 @@ interface AppContextType {
   deleteMedicine: (medicineId: string) => void;
   acknowledgeAlert: (alertId: string) => void;
   resetAllData: () => void;
+
+  // Medicine Alarm System (Requirement 2)
+  activeAlarm: Medicine | null;
+  dismissAlarm: () => void;
+  updateMedicineAlarm: (medicineId: string, enabled: boolean, alarmTime: string) => void;
+  notificationPermission: NotificationPermission;
+  requestNotificationPermission: () => Promise<NotificationPermission>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -138,6 +146,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAlertsDrawerOpen, setIsAlertsDrawerOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+
+  // Medicine Alarm System State (Requirement 2)
+  const [activeAlarm, setActiveAlarm] = useState<Medicine | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => {
+    return typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
+  });
+  const triggeredAlarmsRef = useRef<Set<string>>(new Set());
 
   // Active User Profile
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
@@ -491,8 +506,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const med = medicines.find((m) => m.id === medicineId);
     const medName = med ? med.name : 'Medicine';
     
+    // Calculate new postponed alarm time
+    const snoozeDate = new Date(Date.now() + minutes * 60000);
+    const snoozeH = String(snoozeDate.getHours()).padStart(2, '0');
+    const snoozeM = String(snoozeDate.getMinutes()).padStart(2, '0');
+    const snooze24 = `${snoozeH}:${snoozeM}`;
+    const snoozeFormatted = time24To12(snooze24);
+
     setMedicines((prev) =>
-      prev.map((m) => (m.id === medicineId ? { ...m, status: 'Snoozed' } : m))
+      prev.map((m) =>
+        m.id === medicineId
+          ? {
+              ...m,
+              status: 'Snoozed',
+              alarmEnabled: true,
+              alarmTime: snooze24,
+              doseTime: snoozeFormatted,
+            }
+          : m
+      )
     );
 
     const newEvent: TimelineEvent = {
@@ -502,12 +534,104 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       title: `${medName} reminder snoozed`,
       medicineName: medName,
       status: 'Pending',
-      description: `Postponed by ${minutes} minutes.`,
+      description: `Postponed by ${minutes} minutes (alarm scheduled for ${snoozeFormatted}).`,
     };
     setTimeline((prev) => [newEvent, ...prev]);
 
-    showToast(`Reminder postponed for ${minutes} minutes.`, 'warning');
+    showToast(`Reminder postponed for ${minutes} minutes (alarm set for ${snoozeFormatted}).`, 'warning');
   };
+
+  const dismissAlarm = useCallback(() => {
+    setActiveAlarm(null);
+  }, []);
+
+  const requestNotificationPermission = useCallback(async (): Promise<NotificationPermission> => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        const res = await Notification.requestPermission();
+        setNotificationPermission(res);
+        return res;
+      } catch {
+        return 'default';
+      }
+    }
+    return 'default';
+  }, []);
+
+  const updateMedicineAlarm = useCallback((medicineId: string, enabled: boolean, alarmTime: string) => {
+    const formattedDoseTime = time24To12(alarmTime);
+    setMedicines((prev) =>
+      prev.map((med) => {
+        if (med.id === medicineId) {
+          return {
+            ...med,
+            alarmEnabled: enabled,
+            alarmTime,
+            doseTime: formattedDoseTime,
+          };
+        }
+        return med;
+      })
+    );
+
+    // Clear any previous triggered records for this medicine so updated alarm can trigger
+    const todayDateKey = new Date().toISOString().slice(0, 10);
+    triggeredAlarmsRef.current.delete(`${medicineId}_${todayDateKey}_${alarmTime}`);
+
+    showToast(
+      enabled ? `Alarm enabled for ${formattedDoseTime}` : `Alarm disabled for this reminder`,
+      'info'
+    );
+  }, [showToast]);
+
+  // Alarm Scheduler Runner (runs every 4 seconds)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const curHour = String(now.getHours()).padStart(2, '0');
+      const curMin = String(now.getMinutes()).padStart(2, '0');
+      const currentTime24 = `${curHour}:${curMin}`;
+      const todayDateKey = now.toISOString().slice(0, 10);
+
+      medicines.forEach((med) => {
+        if (med.alarmEnabled && med.status !== 'Taken') {
+          const medAlarm24 = med.alarmTime ? time12To24(med.alarmTime) : time12To24(med.doseTime);
+          if (medAlarm24 === currentTime24) {
+            const triggerKey = `${med.id}_${todayDateKey}_${medAlarm24}`;
+            if (!triggeredAlarmsRef.current.has(triggerKey)) {
+              triggeredAlarmsRef.current.add(triggerKey);
+              setActiveAlarm(med);
+              playAlarmChime();
+
+              if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                try {
+                  new Notification(`⏰ Medicine Alarm: ${med.name}`, {
+                    body: `Time for your dose (${med.doseTime || med.alarmTime}). ${med.instructions}`,
+                    icon: med.image || '/assets/logo.png',
+                  });
+                } catch {
+                  /* ignore */
+                }
+              }
+
+              const alarmEvent: TimelineEvent = {
+                id: `alarm-event-${Date.now()}`,
+                dateGroup: 'Today',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                title: `Alarm Triggered: ${med.name}`,
+                medicineName: med.name,
+                status: 'Pending',
+                description: `Scheduled medicine alarm sounded for ${med.name} (${med.instructions}).`,
+              };
+              setTimeline((prev) => [alarmEvent, ...prev]);
+            }
+          }
+        }
+      });
+    }, 4000);
+
+    return () => clearInterval(intervalId);
+  }, [medicines]);
 
   const sendHelpRequest = (medicineId?: string, reason?: string) => {
     const med = medicineId ? medicines.find((m) => m.id === medicineId) : undefined;
@@ -586,6 +710,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isLowStock: newMed.tabletsLeft <= 10,
       isVeryLow: newMed.tabletsLeft <= 5,
       status: 'Pending',
+      alarmEnabled: newMed.alarmEnabled !== undefined ? newMed.alarmEnabled : true,
+      alarmTime: newMed.alarmTime || time12To24(newMed.doseTime),
     };
 
     setMedicines((prev) => [created, ...prev]);
@@ -599,6 +725,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       estimatedDaysLeft: daysLeft,
       isLowStock: updated.tabletsLeft <= 10,
       isVeryLow: updated.tabletsLeft <= 5,
+      alarmEnabled: updated.alarmEnabled !== undefined ? updated.alarmEnabled : false,
+      alarmTime: updated.alarmTime || time12To24(updated.doseTime),
     };
 
     setMedicines((prev) => prev.map((m) => (m.id === updated.id ? normalized : m)));
@@ -675,6 +803,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteMedicine,
         acknowledgeAlert,
         resetAllData,
+        activeAlarm,
+        dismissAlarm,
+        updateMedicineAlarm,
+        notificationPermission,
+        requestNotificationPermission,
       }}
     >
       {children}
